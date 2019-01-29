@@ -23,7 +23,12 @@ def loadData():
 
 def MSE(W, b, x, y, reg):
     #tf.matmul
-    #tf.
+    #dont use tf library (only for comparison with adam)
+    #W = 28*28 = 784 apparently
+    #x = training or test data
+    #b = 1 or 0
+    #y = train or test target
+    #match dimensions of matrices to multiply first
     N = 3500
     Loss = np.sum((1/(2*N))*((np.transpose(W)*x + b - y)**2) + (reg/2)*(W))
     return Loss
