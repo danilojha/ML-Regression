@@ -29,7 +29,7 @@ def MSE(W, b, x, y, reg):
     #b = 1 or 0
     #y = train or test target
     #match dimensions of matrices to multiply first
-    N = 3500
+    N = len(x)
     Loss = np.sum((1/(2*N))*((np.transpose(W)*x + b - y)**2) + (reg/2)*(W))
     return Loss
 
