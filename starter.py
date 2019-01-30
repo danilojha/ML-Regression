@@ -21,20 +21,25 @@ def loadData():
         testData, testTarget = Data[3600:], Target[3600:]
     return trainData, validData, testData, trainTarget, validTarget, testTarget
 
-def MSE(W, b, x, y, reg):
-    #tf.matmul
-    #dont use tf library (only for comparison with adam)
-    #W = 28*28 = 784 apparently
-    #x = training or test data
-    #b = 1 or 0
-    #y = train or test target
-    #match dimensions of matrices to multiply first
+def MSE(W, b, x, y, reg):   #x (3500, 784),      y (3500, 1),    W (3500, 784)
     N = len(x)
-    Loss = np.sum((1/(2*N))*((np.transpose(W)*x + b - y)**2) + (reg/2)*(W))
+    x = np.reshape(x, (N, np.shape(x)[1]*np.shape(x)[2]))
+    x_flat = x.flatten()
+    print(np.shape(x_flatten))
+#    print(N)
+#    print(np.shape(y))
+    Ld = 0
+    for i, image in enumerate(x):
+#    for i in range(N):
+        Ld = Ld + (1/(2*N))*(np.square(np.linalg.norm(np.dot(W,image) + b - y[i])))
+#        print(np.dot(W[i],x[i]))
+
+    Lw = (reg/2)*np.square(np.linalg.norm(W))
+    Loss = Lw + Ld
     return Loss
 
 #def gradMSE(W, b, x, y, reg):
-    
+    # Your implementation here
 
 #def crossEntropyLoss(W, b, x, y, reg):
     # Your implementation here
@@ -48,7 +53,11 @@ def MSE(W, b, x, y, reg):
 #def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rate=None):
     # Your implementation here
 
-W = np.random.rand(784, 1)
-print(W)
+trainData, validData, testData, trainTarget, validTarget, testTarget = loadData();
+W = np.random.rand(3500, 28*28)
+x = trainData
+y = trainTarget
+#print(W)
 
-
+MSE = MSE(W, 0, x, y, 0)
+print(MSE)
