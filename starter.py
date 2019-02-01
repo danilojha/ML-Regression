@@ -21,20 +21,19 @@ def loadData():
         testData, testTarget = Data[3600:], Target[3600:]
     return trainData, validData, testData, trainTarget, validTarget, testTarget
 
-def MSE(W, b, x, y, reg):   #x (3500, 784),      y (3500, 1),    W (3500, 784)
+def MSE(W, b, x, y, reg):   
     N = len(x)
     x = np.reshape(x, (N, np.shape(x)[1]*np.shape(x)[2]))
-    x_flat = x.flatten()
-    print(np.shape(x_flatten))
-#    print(N)
-#    print(np.shape(y))
-    Ld = 0
-    for i, image in enumerate(x):
-#    for i in range(N):
-        Ld = Ld + (1/(2*N))*(np.square(np.linalg.norm(np.dot(W,image) + b - y[i])))
-#        print(np.dot(W[i],x[i]))
+    print(np.shape(x))
+    print(np.shape(y))
+    print(np.shape(np.transpose(W)))
 
+    Ld = (1/(2*N))*(np.square(np.linalg.norm(np.matmul(x,W) + b - y)))
+    print(Ld)
+    
     Lw = (reg/2)*np.square(np.linalg.norm(W))
+    print(Lw)
+    
     Loss = Lw + Ld
     return Loss
 
@@ -54,7 +53,7 @@ def MSE(W, b, x, y, reg):   #x (3500, 784),      y (3500, 1),    W (3500, 784)
     # Your implementation here
 
 trainData, validData, testData, trainTarget, validTarget, testTarget = loadData();
-W = np.random.rand(3500, 28*28)
+W = np.zeros(shape = (784, 1))
 x = trainData
 y = trainTarget
 #print(W)
