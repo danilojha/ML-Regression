@@ -53,7 +53,7 @@ def MSE(W, b, x, y, reg):
     # Your implementation here
 
 trainData, validData, testData, trainTarget, validTarget, testTarget = loadData();
-W = np.zeros(shape = (784, 1))
+W = np.zeros((784, 1))
 x = trainData
 y = trainTarget
 #print(W)
