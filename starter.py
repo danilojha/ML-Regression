@@ -27,18 +27,30 @@ def MSE(W, b, x, y, reg):
     print(np.shape(x))
     print(np.shape(y))
     print(np.shape(np.transpose(W)))
-
+    #MSE loss function
     Ld = (1/(2*N))*(np.square(np.linalg.norm(np.matmul(x,W) + b - y)))
     print(Ld)
-    
+    #Weight decay loss function
     Lw = (reg/2)*np.square(np.linalg.norm(W))
     print(Lw)
-    
+    #Total Loss
     Loss = Lw + Ld
     return Loss
 
-#def gradMSE(W, b, x, y, reg):
-    # Your implementation here
+def gradMSE(W, b, x, y, reg):
+#Gradient with respect to weights
+    N = len(x)
+    x = np.reshape(x, (N, np.shape(x)[1]*np.shape(x)[2]))
+    a=np.matmul(x, W)
+    gradW = np.linalg.norm(a + b - y)*x + reg*np.linalg.norm(W)
+    print(np.shape(gradW))
+    
+    gradB = np.linalg.norm(a + b - y)
+    print(np.shape(gradB))
+    print(gradB)
+    return gradW, gradB
+
+
 
 #def crossEntropyLoss(W, b, x, y, reg):
     # Your implementation here
@@ -60,3 +72,5 @@ y = trainTarget
 
 MSE = MSE(W, 0, x, y, 0)
 print(MSE)
+grad = gradMSE(W, 0, x, y, 0)
+
