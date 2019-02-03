@@ -22,7 +22,7 @@ def loadData():
     return trainData, validData, testData, trainTarget, validTarget, testTarget
 
 def MSE(W, b, x, y, reg):   
-    N = len(x)
+    N = len(x)  
     #MSE loss function
     Ld = (1/(2*N))*(np.square(np.linalg.norm(np.matmul(x,W) + b - y)))
     #Weight decay loss function
@@ -32,18 +32,15 @@ def MSE(W, b, x, y, reg):
     return Loss
 
 def gradMSE(W, b, x, y, reg):
-#Gradient with respect to weights
     N = len(x)
     Wx = np.matmul(x, W)
-    L2 = np.linalg.norm(Wx + b - y)
     #gradient of MSE with respect to weights
     gradW = np.zeros((N,1))
+#    gradW = (1/N)*L2*x + reg*np.linalg.norm(W)
+    gradW = (1/N)*np.matmul(x.T, Wx + b - y) + reg*W
     print(np.shape(gradW))
-    gradW = (1/N)*L2*x.T + reg*np.linalg.norm(W)
-    print(np.shape(gradW))
-    print(np.shape(x))
     #gradient of MSE with respect to bias
-    gradB = (1/N)*L2
+    gradB = (1/N)*(Wx + b - y)
     return gradW, gradB
 
 #def crossEntropyLoss(W, b, x, y, reg):
@@ -55,12 +52,12 @@ def gradMSE(W, b, x, y, reg):
 def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS):
     x = trainingData
     y = trainingLabels
-    print(np.shape(W))
     for i in range(iterations):
         gradW, gradB = gradMSE(W, b, x, y, reg)
-        if np.all(gradW < EPS):
-            return W, b
-        W = W - alpha*gradW.T
+        print(i)
+#        if np.all(gradW < EPS):
+#            return W, b
+        W = W - alpha*gradW
         b = b - alpha*gradB
         print(i)
     return W, b
@@ -74,6 +71,7 @@ x = trainData
 N = len(x)
 x = np.reshape(x, (N, np.shape(x)[1]*np.shape(x)[2]))
 y = trainTarget
+print(np.shape(y))
 #print(W)
 
 
@@ -81,7 +79,7 @@ y = trainTarget
 mean = MSE(W, 0, x, y, 0)
 print(mean)
 grad = gradMSE(W, 0, x, y, 0)
-#W, b = grad_descent(W, 0, x, y, 0.005, 5000, 0, 0.0000001)
+W, b = grad_descent(W, 0, x, y, 0.005, 5000, 0, 0.0000001)
 mean = MSE(W, 0, x, y, 0)
 eff = 1 - mean
 print(eff)
