@@ -41,7 +41,22 @@ def gradMSE(W, b, x, y, reg):
     gradB = (1/N)*(Wx + b - y)
     return gradW, gradB
 
-#def crossEntropyLoss(W, b, x, y, reg):
+def crossEntropyLoss(W, b, x, y, reg):
+    #Binary cross entropy loss
+    N = len(x)
+    yhat = 1/(1 + np.exp(-(W.T*x + b)))
+    Ld = (1/N)*(np.square(-y*np.log(yhat) - ((1 - y)*np.log(1 - yhat))))
+    
+    #Weight decay loss function
+    Lw = (reg/2)*np.square(np.linalg.norm(W))
+    Loss = Lw + Ld
+                
+    return Loss
+                
+                
+        
+
+
     # Your implementation here
 
 #def gradCE(W, b, x, y, reg):
