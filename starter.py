@@ -36,9 +36,7 @@ def gradMSE(W, b, x, y, reg):
     Wx = np.matmul(x, W)
     #gradient of MSE with respect to weights
     gradW = np.zeros((N,1))
-#    gradW = (1/N)*L2*x + reg*np.linalg.norm(W)
     gradW = (1/N)*np.matmul(x.T, Wx + b - y) + reg*W
-    print(np.shape(gradW))
     #gradient of MSE with respect to bias
     gradB = (1/N)*(Wx + b - y)
     return gradW, gradB
@@ -53,13 +51,13 @@ def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS
     x = trainingData
     y = trainingLabels
     for i in range(iterations):
-        gradW, gradB = gradMSE(W, b, x, y, reg)
         print(i)
-#        if np.all(gradW < EPS):
-#            return W, b
+        gradW, gradB = gradMSE(W, b, x, y, reg)
+        Wold = W
         W = W - alpha*gradW
         b = b - alpha*gradB
-        print(i)
+        if (np.any(abs(W - Wold)) < EPS):
+            return W, b
     return W, b
 
 #def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rate=None):
@@ -70,18 +68,31 @@ W = np.zeros((784, 1))
 x = trainData
 N = len(x)
 x = np.reshape(x, (N, np.shape(x)[1]*np.shape(x)[2]))
+
+testData = np.reshape(testData, (len(testData), np.shape(testData)[1]*np.shape(testData)[2]))
+validData = np.reshape(validData, (len(validData), np.shape(validData)[1]*np.shape(validData)[2]))
+
 y = trainTarget
-print(np.shape(y))
-#print(W)
+
+trainingOld = MSE(W, 0, x, y, 0)
+testOld = MSE(W, 0, testData, testTarget, 0)
+validOld = MSE(W, 0, validData, validTarget, 0)
+
+W, b = grad_descent(W, 0, x, y, 0.0001, 5000, 0, 0.0000001)
+
+LossTraining = MSE(W, 0, x, y, 0)
+print(1 - trainingOld)
+print(1 - LossTraining)
+
+LossTest = MSE(W, 0, testData, testTarget, 0)
+print(1- testOld)
+print(1 - LossTest)
+
+LossValid = MSE(W, 0, validData, validTarget, 0)
+print(1 - validOld)
+print(1- LossValid)
 
 
 
-mean = MSE(W, 0, x, y, 0)
-print(mean)
-grad = gradMSE(W, 0, x, y, 0)
-W, b = grad_descent(W, 0, x, y, 0.005, 5000, 0, 0.0000001)
-mean = MSE(W, 0, x, y, 0)
-eff = 1 - mean
-print(eff)
 
 
