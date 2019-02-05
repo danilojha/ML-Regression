@@ -38,7 +38,7 @@ def gradMSE(W, b, x, y, reg):
     gradW = np.zeros((N,1))
     gradW = (1/N)*np.matmul(x.T, Wx + b - y) + reg*W
     #gradient of MSE with respect to bias
-    gradB = (1/N)*(Wx + b - y)
+    gradB = np.dot(np.ones((1, x.shape[0])), Wx + b - y)*(1/N)
     return gradW, gradB
 
 def crossEntropyLoss(W, b, x, y, reg):
@@ -52,27 +52,63 @@ def crossEntropyLoss(W, b, x, y, reg):
     Loss = Lw + Ld
                 
     return Loss
-                
-                
-        
-
-
-    # Your implementation here
 
 #def gradCE(W, b, x, y, reg):
     # Your implementation here
 
-def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS):
+def accuracy(weights, b, data, label):
+    trained = np.matmul(data, weights) + b
+    correct = 0
+    for i in range(len(trained)):
+        if (abs(label[i] - trained[i]) < 0.5):
+            correct = correct + 1
+    return correct/len(trained)
+    
+
+def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS, validData, validTarget, testData, testTarget):
     x = trainingData
     y = trainingLabels
+
+    #all the loses of linear gradient descent
+    MSEs = np.zeros((iterations, 1))
+    MSEvalid = np.zeros((iterations, 1))
+    MSEtest = np.zeros((iterations, 1))
+
+    #array of iterations
+    iterationNum = np.zeros((iterations, 1))
+
+    #accuracy classifications
+    accuracies = np.zeros((iterations, 1))
+    print(np.shape(b))
+    accuracyInitial = accuracy(W, b, validData, validTarget)
+
+    print(np.shape(b))
     for i in range(iterations):
-        print(i)
+ #       print(i)
         gradW, gradB = gradMSE(W, b, x, y, reg)
-        Wold = W
+        print(np.shape(gradB))
         W = W - alpha*gradW
         b = b - alpha*gradB
-        if (np.any(abs(W - Wold)) < EPS):
+    
+        
+        MSEs[i] = MSE(W, 0, trainingData, trainingLabels, 0)
+        MSEvalid[i] = MSE(W, 0, validData, validTarget, 0)
+        MSEtest[i] = MSE(W, 0, testData, testTarget, 0)     
+#        accuracies[i] = accuracy(W, b, x, y)
+
+        iterationNum[i] = i
+        if (np.all(abs(gradW)) < EPS):
             return W, b
+    print(np.shape(b))
+    accuracyFinal = accuracy(W, 0, validData, validTarget)
+    print(accuracyInitial)
+    print(accuracyFinal)
+
+#    plt.xlabel('Iterations')
+#    plt.ylabel('Loss')
+#    plt.title('0.5 Reg Training Loss')
+#    plt.plot(iterationNum, MSEs, 'r')
+#    plt.show()
     return W, b
 
 #def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rate=None):
@@ -82,33 +118,15 @@ trainData, validData, testData, trainTarget, validTarget, testTarget = loadData(
 W = np.zeros((784, 1))
 x = trainData
 N = len(x)
-x = np.reshape(x, (N, np.shape(x)[1]*np.shape(x)[2]))
+b=0
 
+x = np.reshape(x, (N, np.shape(x)[1]*np.shape(x)[2]))
 testData = np.reshape(testData, (len(testData), np.shape(testData)[1]*np.shape(testData)[2]))
 validData = np.reshape(validData, (len(validData), np.shape(validData)[1]*np.shape(validData)[2]))
 
 y = trainTarget
 
-trainingOld = MSE(W, 0, x, y, 0)
-testOld = MSE(W, 0, testData, testTarget, 0)
-validOld = MSE(W, 0, validData, validTarget, 0)
-
-W, b = grad_descent(W, 0, x, y, 0.005, 5000, 0, 0.0000001)
-
-LossTraining = MSE(W, 0, x, y, 0)
-print(1 - trainingOld)
-print(1 - LossTraining)
-print(trainingOld)
-print(LossTraining)
-
-LossTest = MSE(W, 0, testData, testTarget, 0)
-print(1- testOld)
-print(1 - LossTest)
-
-LossValid = MSE(W, 0, validData, validTarget, 0)
-print(1 - validOld)
-print(1- LossValid)
-
+W, b = grad_descent(W, 0, x, y, 0.005, 5000, 0.001, 0.0000001, validData, validTarget, testData, testTarget)
 
 
 
