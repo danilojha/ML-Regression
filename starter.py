@@ -53,8 +53,17 @@ def crossEntropyLoss(W, b, x, y, reg):
                 
     return Loss
 
-#def gradCE(W, b, x, y, reg):
-    # Your implementation here
+
+def gradCE(W, b, x, y, reg):
+    N = len(x)
+    gradW = np.zeros((N,1))
+    temp = (- y + 1 - (1/(1+np.exp(W.T*x + b))))
+    print(temp.shape);
+    print(x.shape)
+    gradW = (1/N)*(np.matmul(x.T, temp)) + reg*W
+    gradB = (1/N)*(1 - y - (1/(1+np.exp(W.T*x + b))))
+
+    return gradW, gradB
 
 def accuracy(weights, b, data, label):
     trained = np.matmul(data, weights) + b
@@ -84,7 +93,7 @@ def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS
 
     print(np.shape(b))
     for i in range(iterations):
- #       print(i)
+        #print(i)
         gradW, gradB = gradMSE(W, b, x, y, reg)
         print(np.shape(gradB))
         W = W - alpha*gradW
@@ -111,8 +120,51 @@ def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS
 #    plt.show()
     return W, b
 
-#def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rate=None):
-    # Your implementation here
+def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rate=None):
+
+    #Initialize tensors
+    W = tf.truncated_normal(shape=[784], stddev=0.5, dtype=tf.float32) #weights
+    b = tf.Variable() #bias
+    x = tf.placeholder(tf.float32, shape=(3500,784)) #data
+    yhat = tf.placeholder(tf.float32, shape=(3500, 1)) #predicted labels
+    y = tf.placeholder(tf.float32, shape=(3500, 1)) #real labels
+    reg = tf.placeholder(tf.float32, shape=(1)) #regularization param
+    
+    tf.set_random_seed(421)
+
+    if loss == "MSE":
+    # Your implementation
+        L = MSE(W, b, x, y, reg)
+    elif loss == "CE":
+        L = crossEntropyLoss(W, b, x, y, reg)
+
+    opt = tf.train.AdamOptimizer(learning_rate=0.001,beta1, beta2, epsilon)
+    opt_op = opt.minimize(L)
+    #Be sure to run opt_op.run() in training
+    return W, b, yhat, y, L, opt, reg
+
+def SDG(W, b, x, yhat, y, L, opt, reg, batchSize, epoch)
+    N = len(x)
+    num_mini_batches = math.floor(N/batchSize)
+    _permutation = np.random.permutation(N)
+    for i in range(epochs)
+        shuffled_x = x[:,_permutation]
+        shuffled_y =
+        
+        for j in range(num_mini_batches)
+            #get mini-batches
+            mini_batch_x = shuffled_x[:,j*batchSize : (j+1)*batchSize]
+            mini_batch_y = shuffled_y[:,j*batchSize : (j+1)*batchSize]
+            #Calculate with update with mini-batch
+            Loss = 
+
+
+
+
+
+        #Store the training, validation and test losses and accuracies
+
+
 
 trainData, validData, testData, trainTarget, validTarget, testTarget = loadData();
 W = np.zeros((784, 1))
@@ -127,6 +179,7 @@ validData = np.reshape(validData, (len(validData), np.shape(validData)[1]*np.sha
 y = trainTarget
 
 W, b = grad_descent(W, 0, x, y, 0.005, 5000, 0.001, 0.0000001, validData, validTarget, testData, testTarget)
+
 
 
 
