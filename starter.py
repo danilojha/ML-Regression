@@ -63,7 +63,6 @@ def gradCE(W, b, x, y, reg):
     gradB = (1/N)*(1 - y - (1/(1+np.exp(W.T*x + b))))
 
     return gradW, gradB
-    # Your implementation here
 
 def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS):
     x = trainingData
@@ -78,8 +77,29 @@ def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS
             return W, b
     return W, b
 
-#def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rate=None):
+def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rate=None):
+`
+    #Initialize tensors
+    W = tf.truncated_normal(shape=[784], stddev=0.5, dtype=tf.float32)
+    b = tf.Variable()
+    x = tf.placeholder(tf.float32, shape=())
+    y = tf.placeholder(tf.float32, shape=())
+    reg = tf.placeholder(tf.float32, shape=())
+    learning_rate =
+    
+    tf.set_random_seed(421)
+
+    if loss == "MSE":
+    # Your implementation
+        L = MSE(W, b, x, y, reg)
+    elif loss == "CE":
+        L = crossEntropyLoss(W, b, x, y, reg)
+    opt = GradientDescentOptimizer(learning_rate=0.001)
+    opt_op = opt.minimize(L)
+
     # Your implementation here
+
+
 
 trainData, validData, testData, trainTarget, validTarget, testTarget = loadData();
 W = np.zeros((784, 1))
