@@ -78,11 +78,13 @@ trainingOld = MSE(W, 0, x, y, 0)
 testOld = MSE(W, 0, testData, testTarget, 0)
 validOld = MSE(W, 0, validData, validTarget, 0)
 
-W, b = grad_descent(W, 0, x, y, 0.0001, 5000, 0, 0.0000001)
+W, b = grad_descent(W, 0, x, y, 0.005, 5000, 0, 0.0000001)
 
 LossTraining = MSE(W, 0, x, y, 0)
 print(1 - trainingOld)
 print(1 - LossTraining)
+print(trainingOld)
+print(LossTraining)
 
 LossTest = MSE(W, 0, testData, testTarget, 0)
 print(1- testOld)
