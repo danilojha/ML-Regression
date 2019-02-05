@@ -52,21 +52,24 @@ def crossEntropyLoss(W, b, x, y, reg):
     Loss = Lw + Ld
                 
     return Loss
-                
-                
-        
 
+def gradCE(W, b, x, y, reg):
+    N = len(x)
+    gradW = np.zeros((N,1))
+    temp = (- y + 1 - (1/(1+np.exp(W.T*x + b))))
+    print(temp.shape);
+    print(x.shape)
+    gradW = (1/N)*(np.matmul(x.T, temp)) + reg*W
+    gradB = (1/N)*(1 - y - (1/(1+np.exp(W.T*x + b))))
 
-    # Your implementation here
-
-#def gradCE(W, b, x, y, reg):
+    return gradW, gradB
     # Your implementation here
 
 def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS):
     x = trainingData
     y = trainingLabels
     for i in range(iterations):
-        print(i)
+        #print(i)
         gradW, gradB = gradMSE(W, b, x, y, reg)
         Wold = W
         W = W - alpha*gradW
@@ -108,6 +111,12 @@ print(1 - validOld)
 print(1- LossValid)
 
 
+TestgradCE = gradCE(W, 0, x, y, 0)
+TestgradMSE = gradMSE(W, 0, x, y, 0)
+print(np.shape(TestgradCE))
+print(TestgradCE)
+print(np.shape(TestgradMSE))
+print(TestgradMSE)
 
 
 
