@@ -97,53 +97,65 @@ def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS
 def buildGraph(beta1=None, beta2=None, epsilon=None, lossType="None", learning_rate=None):
     tf.set_random_seed(421)
     #Initialize tensors
-    W = tf.Variable(truncated_normal(shape=[784, 1], stddev=0.5), name='weight') #weights
+    W = tf.Variable(tf.truncated_normal(shape=[784, 1], stddev=0.5), name='weight') #weights
     b = tf.Variable(0, name = 'bias') #bias
     x = tf.placeholder(tf.float32, shape=(3500,784), name='x') #data
     y = tf.placeholder(tf.float32, shape=(3500, 1), name='y') #real labels 
     reg = tf.placeholder(tf.float32, shape=(1), name ='reg') #regularization
     
     yhat = tf.placeholder(tf.float32, shape=(3500, 1), name = 'yhat') #predicted labels
-    yhat = tf.math.add(tf.math.multiply(x, W), b)
+    yhat = tf.add(tf.cast(tf.matmul(x, W), tf.float32), tf.cast(b, tf.float32))
     
-    if loss == "MSE":
+    if lossType == "MSE":
         Loss = tf.losses.mean_squared_error(y,yhat)
-    elif loss == "CE":
+    elif lossType == "CE":
         Loss = tf.losses.sigmoid_cross_entropy(y, yhat)
 
     opt = tf.train.AdamOptimizer(learning_rate=learning_rate)
     #Be sure to run opt_op.run() in training
     return W, b, x, yhat, y, Loss, opt, reg
 
-def SGD(W, b, x, y, alpha, iterations, reg, EPS, lossType="None", batchSize, epoch):
+def SGD(W, b, trainingData, trainingTarget, alpha, epochs, regularization, EPS, batchSize, validData, validTarget, testData, testTarget, lossType="None"):
     #Initialize graph
     W, b, x, yhat, y, Loss, opt, reg = buildGraph(beta1=None, beta2=None, epsilon=None, lossType="MSE", learning_rate=0.001)
-    sess.run(tf.global_variables_initializer())
+    init = tf.global_variables_initializer()
     #Calculate number of batches in training set
-    N = len(x)
-    num_mini_batches = math.floor(N/batchSize)
-    _permutation = np.random.permutation(N)
-    for i in range(epochs)
-        #Shuffle dataset each epoch
-        shuffled_x = x[:,_permutation]
-        shuffled_y = y[:,_permutation]
-        epoch_loss = 0
+    N = len(trainingData)
+    num_mini_batches = np.floor(N/batchSize)
 
+    trainingLoss = []
+    validationLoss = []
+    testLoss = []
+    trainingAccuracy = []
+    validationAccuracy = []
+    testAccuracy = []
+
+    with tf.Session() as sess:
+        sess.run(init)
+        for i in range(epochs):
+            #Shuffle dataset each epoch
+            permutation = np.random.permutation(N)
+            shuffled_x = trainingData[permutation,:]
+            shuffled_y = trainingTarget[permutation,:]
+            epoch_loss = 0
         
-        for j in range(num_mini_batches):
-            #get mini-batches
-            mini_batch_x = shuffled_x[:,j*batchSize : (j+1)*batchSize]
-            mini_batch_y = shuffled_y[:,j*batchSize : (j+1)*batchSize]
-            #Calcuate step
-            c = sess.run([optimizer, loss], feed_dict={x: mini_batch_x, y: mini_batch_y})
-            #Update with mini-batch
-            epoch_loss += c
-            #Loss = tf.losses.mean_squared_error(labels=mini_batch_y,predictions=yhat,weights=W, loss_collection=tf.GraphKeys.LOSSES, reduction=Reduction.SUM_BY_NONZERO_WEIGHTS)
-return
+            for j in range(int(num_mini_batches)):
+                #get mini-batches
+                mini_batch_x = shuffled_x[:,j*batchSize : (j+1)*batchSize]
+                mini_batch_y = shuffled_y[:,j*batchSize : (j+1)*batchSize]
+                sess.run(opt, feed_dict={x: mini_batch_x, y: mini_batch_y})
+                trainingLoss.append(sess.run(Loss, feed_dict={x, y}))
+                validationLoss.append(sess.run(Loss, feed_dict={validData, validTarget}))
+                testLoss.append(sess.run(Loss, feed_dict={testData, testTarget}))
+                print(j)
+                #Calcuate step
+                #c = sess.run([opt, Loss], feed_dict={x: mini_batch_x, y: mini_batch_y})
+                #Update with mini-batch
+                #epoch_loss += c
+                #Loss = tf.losses.mean_squared_error(labels=mini_batch_y,predictions=yhat,weights=W, loss_collection=tf.GraphKeys.LOSSES, reduction=Reduction.SUM_BY_NONZERO_WEIGHTS)
+    return trainingLoss, valdiationLoss, testLoss, trainingAccuracy, validationAccuracy, testAccuracy
 
-        #Store the training, validation and test losses and accuracies
-
-
+  
 #loading data
 trainData, validData, testData, trainTarget, validTarget, testTarget = loadData();
 
@@ -155,16 +167,16 @@ epochs = 5000
 error = 0.0000001
 LR = 0.005
 reg = 0.1
-
+batchSize = 500
 #reshaping data
 trainData = np.reshape(trainData, (len(trainData), np.shape(trainData)[1]*np.shape(trainData)[2]))
 testData = np.reshape(testData, (len(testData), np.shape(testData)[1]*np.shape(testData)[2]))
 validData = np.reshape(validData, (len(validData), np.shape(validData)[1]*np.shape(validData)[2]))
-
 x = trainData
 y = trainTarget
 
-
+tLoss, vLoss, teLoss, tAccuracy, vAccuracy, teAccuracy = SGD(W, b, x, y, LR, epochs, reg, error, batchSize, validData, validTarget, testData, testTarget, lossType="MSE")
+    
 
 
 
