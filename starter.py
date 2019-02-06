@@ -44,30 +44,26 @@ def gradMSE(W, b, x, y, reg):
 def crossEntropyLoss(W, b, x, y, reg):
     #Binary cross entropy loss
     N = len(x)
-    yhat = 1/(1 + np.exp(-(W.T*x + b)))
-    Ld = (1/N)*(np.square(-y*np.log(yhat) - ((1 - y)*np.log(1 - yhat))))
-    
+    yhat = 1/(1 + np.exp(-np.matmul(x, W) + b))
+    Ld = (1/N)*np.sum((np.dot(-1*y.T, np.log(yhat)) - (np.dot((1-y).T, np.log(1 - yhat)))))
     #Weight decay loss function
     Lw = (reg/2)*np.square(np.linalg.norm(W))
     Loss = Lw + Ld
-                
     return Loss
-
 
 def gradCE(W, b, x, y, reg):
     N = len(x)
+    yhat = 1/(1 + np.exp(-1*np.matmul(x, W) + b))
     gradW = np.zeros((N,1))
-    temp = (- y + 1 - (1/(1+np.exp(W.T*x + b))))
-    print(temp.shape);
-    print(x.shape)
-    gradW = (1/N)*(np.matmul(x.T, temp)) + reg*W
-    gradB = (1/N)*(1 - y - (1/(1+np.exp(W.T*x + b))))
-
+    gradW = np.dot(x.T, yhat-y)*(1/N) + reg*W
+    gradB = np.mean(yhat-y)
     return gradW, gradB
 
 #finding the accuracy of weights and biases #ofcorrectclassifications/#ofimages
-def accuracy(weights, b, data, label):
+def accuracy(weights, b, data, label, lossType="None"):
     trained = np.matmul(data, weights) + b
+    if (lossType == 'CE'):
+        trained = 1/(1+np.exp(-1*np.matmul(data, weights) + b))    
     correct = 0
     for i in range(len(trained)):
         if (abs(label[i] - trained[i]) < 0.5):
@@ -82,52 +78,60 @@ def normal(x, y):
     result = np.matmul(c, y)
     return result
 
-def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS, validData, validTarget, testData, testTarget):
+def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS, validData, validTarget, testData, testTarget, lossType="None"):
     x = trainingData
     y = trainingLabels
-
+    print(lossType)
     #all the loses of linear gradient descent
     MSEs = np.zeros((iterations, 1))
     MSEvalid = np.zeros((iterations, 1))
     MSEtest = np.zeros((iterations, 1))
-
+    CEs = np.zeros((iterations, 1))
+    CEvalid = np.zeros((iterations, 1))
+    CEtest = np.zeros((iterations, 1))
     #array of iterations
     iterationNum = np.zeros((iterations, 1))
-
     #accuracy classifications
     accuracies = np.zeros((iterations, 1))
-
     #initial accuracies
-    accuracyInitial = accuracy(W, b, trainingData, trainingLabels)
-    accuracyInitialV = accuracy(W, b, validData, validTarget)
-    accuracyInitialT = accuracy(W, b, testData, testTarget)
-
+    accuracyInitial = accuracy(W, b, trainingData, trainingLabels, lossType)
+    accuracyInitialV = accuracy(W, b, validData, validTarget, lossType)
+    accuracyInitialT = accuracy(W, b, testData, testTarget, lossType)
+    print(accuracyInitial)
     for i in range(iterations):
+        print(i)
         #calculating the gradient and updating the weights
-        gradW, gradB = gradMSE(W, b, x, y, reg)
+        if (lossType == 'MSE'):
+            gradW, gradB = gradMSE(W, b, x, y, reg)
+        else:
+            gradW, gradB = gradCE(W, b, x, y, reg)
         W = W - alpha*gradW
         b = b - alpha*gradB
-
+        
         #Losses and accuracies stored for each iteration
         #comment out what is not needed for graph
         iterationNum[i] = i
-        MSEs[i] = MSE(W, b, trainingData, trainingLabels, 0)
-        MSEvalid[i] = MSE(W, b, validData, validTarget, 0)
-        MSEtest[i] = MSE(W, b, testData, testTarget, 0)     
-        accuracies[i] = accuracy(W, b, x, y)
-
+        MSEs[i] = MSE(W, b, trainingData, trainingLabels, reg)
+        MSEvalid[i] = MSE(W, b, validData, validTarget, reg)
+        MSEtest[i] = MSE(W, b, testData, testTarget, reg)
+        CEs[i] = crossEntropyLoss(W, b, trainingData, trainingLabels, reg)
+        CEvalid[i] = crossEntropyLoss(W, b, validData, validTarget, reg)
+        CEtest[i] = crossEntropyLoss(W, b, testData, testTarget, reg)
+        accuracies[i] = accuracy(W, b, x, y, lossType)
         #exit condition if difference is less than provided error
         if (np.all(abs(gradW)) < EPS):
             return W, b
 
     #final accuracies
-    accuracyFinal = accuracy(W, b, trainingData, trainingLabels)
-    accuracyFinalV = accuracy(W, b, validData, validTarget)
-    accuracyFinalT = accuracy(W, b, testData, testTarget)
-
+    accuracyFinal = accuracy(W, b, trainingData, trainingLabels, lossType)
+    accuracyFinalV = accuracy(W, b, validData, validTarget, lossType)
+    accuracyFinalT = accuracy(W, b, testData, testTarget, lossType)
+    print(accuracies[0])
+    print(accuracies[1])
+    print(accuracyFinal)
     #printing out initial and final accuracies for all data sets
     #after running descent on training data
-    print("Training accuracy Test 0.5 Reg")
+    print("Training accuracy Test 0.1 Reg")
     print(accuracyInitial)
     print(accuracyFinal)
     print("Valid")
@@ -140,14 +144,13 @@ def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS
     #plotting accuracies
     plt.xlabel('Iterations')
     plt.ylabel('Accuracy')
-    plt.title('0.5 Reg Training Accuracy')
+    plt.title('0.005 LR 0.1 Reg Training Accuracy')
     plt.plot(iterationNum, accuracies, 'r')
     plt.show()
     
-    return W, b, MSEs, MSEvalid, MSEtest, iterationNum
+    return W, b, CEs, CEvalid, CEtest, iterationNum
 
 def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rate=None):
-
     #Initialize tensors
     W = tf.truncated_normal(shape=[784], stddev=0.5, dtype=tf.float32) #weights
     b = tf.Variable() #bias
@@ -209,7 +212,7 @@ y = trainTarget
 
 #more parameter initializiation
 LR = 0.005
-reg = 0
+reg = 0.1
 
 ####normal function (part 1.5)###
 n = normal(x, y)
@@ -226,7 +229,10 @@ print(accuracyfinal)
 #################################
 
 ###running gradient descent and plotting results#####
-W, b, Loss, LossValid, LossTest, iterations = grad_descent(W, b, x, y, LR, epochs, reg, error, validData, validTarget, testData, testTarget)
+initial = crossEntropyLoss(W, b, x, y, reg)
+W, b, Loss, LossValid, LossTest, iterations = grad_descent(W, b, x, y, LR, epochs, reg, error, validData, validTarget, testData, testTarget, lossType="CE")
+print('initial loss')
+print(initial)
 print("Training")
 print(Loss[0])
 print(Loss[4999])
@@ -239,22 +245,22 @@ print(LossTest[4999])
 
 plt.xlabel('Iterations')
 plt.ylabel('Loss')
-plt.title('0.5 Reg Training Loss')
+plt.title('0.005 LR Zero-Weight Decay Training Loss')
 plt.plot(iterations, Loss, 'r')
 plt.show()
 
 plt.xlabel('Iterations')
 plt.ylabel('Loss')
-plt.title('0.5 Reg Valid Loss')
+plt.title('0.005 LR 0.1 Reg Valid Loss')
 plt.plot(iterations, LossValid, 'r')
 plt.show()
 
 plt.xlabel('Iterations')
 plt.ylabel('Loss')
-plt.title('0.5 Reg Test Loss')
+plt.title('0.005 LR 0.1 Reg Test Loss')
 plt.plot(iterations, LossTest, 'r')
 plt.show()
-###############################################
+##############################################
 
 
 
