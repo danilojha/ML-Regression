@@ -104,7 +104,7 @@ def buildGraph(beta1=None, beta2=None, epsilon=None, lossType="None", learning_r
     reg = tf.placeholder(tf.float32, shape=(1), name ='reg') #regularization
     
     yhat = tf.placeholder(tf.float32, shape=(3500, 1), name = 'yhat') #predicted labels
-    yhat = tf.math.add(tf.math.multiply(x, W))
+    yhat = tf.math.add(tf.math.multiply(x, W), b)
     
     if loss == "MSE":
         Loss = tf.losses.mean_squared_error(y,yhat)
