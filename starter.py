@@ -1,3 +1,6 @@
+#ECE421 Assignment 1
+#Danil Ojha & Elizabeth Bertozzi
+
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -99,8 +102,8 @@ def buildGraph(beta1=None, beta2=None, epsilon=None, lossType="None", learning_r
     #Initialize tensors
     W = tf.Variable(tf.truncated_normal(shape=[784, 1], stddev=0.5), name='weight') #weights
     b = tf.Variable(0, name = 'bias') #bias
-    x = tf.placeholder(tf.float32, shape=(3500,784), name='x') #data
-    y = tf.placeholder(tf.float32, shape=(3500, 1), name='y') #real labels 
+    x = tf.placeholder(tf.float32, shape=(None,784), name='x') #data
+    y = tf.placeholder(tf.float32, shape=(None, 1), name='y') #real labels 
     reg = tf.placeholder(tf.float32, shape=(1), name ='reg') #regularization
     
     yhat = tf.placeholder(tf.float32, shape=(3500, 1), name = 'yhat') #predicted labels
@@ -111,11 +114,11 @@ def buildGraph(beta1=None, beta2=None, epsilon=None, lossType="None", learning_r
     elif lossType == "CE":
         Loss = tf.losses.sigmoid_cross_entropy(y, yhat)
 
-    opt = tf.train.AdamOptimizer(learning_rate=learning_rate)
+    opt = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(Loss)
     #Be sure to run opt_op.run() in training
     return W, b, x, yhat, y, Loss, opt, reg
 
-def SGD(W, b, trainingData, trainingTarget, alpha, epochs, regularization, EPS, batchSize, validData, validTarget, testData, testTarget, lossType="None"):
+def SGD(Weight, bias, trainingData, trainingTarget, alpha, epochs, regularization, EPS, batchSize, validData, validTarget, testData, testTarget, lossType="None"):
     #Initialize graph
     W, b, x, yhat, y, Loss, opt, reg = buildGraph(beta1=None, beta2=None, epsilon=None, lossType="MSE", learning_rate=0.001)
     init = tf.global_variables_initializer()
@@ -129,7 +132,9 @@ def SGD(W, b, trainingData, trainingTarget, alpha, epochs, regularization, EPS, 
     trainingAccuracy = []
     validationAccuracy = []
     testAccuracy = []
-
+    iterations =[]
+    
+    
     with tf.Session() as sess:
         sess.run(init)
         for i in range(epochs):
@@ -138,45 +143,27 @@ def SGD(W, b, trainingData, trainingTarget, alpha, epochs, regularization, EPS, 
             shuffled_x = trainingData[permutation,:]
             shuffled_y = trainingTarget[permutation,:]
             epoch_loss = 0
-        
+            print(i)
+            iterations.append(i)
+            
             for j in range(int(num_mini_batches)):
                 #get mini-batches
-                mini_batch_x = shuffled_x[:,j*batchSize : (j+1)*batchSize]
-                mini_batch_y = shuffled_y[:,j*batchSize : (j+1)*batchSize]
-                sess.run(opt, feed_dict={x: mini_batch_x, y: mini_batch_y})
-                trainingLoss.append(sess.run(Loss, feed_dict={x, y}))
-                validationLoss.append(sess.run(Loss, feed_dict={validData, validTarget}))
-                testLoss.append(sess.run(Loss, feed_dict={testData, testTarget}))
-                print(j)
-                #Calcuate step
-                #c = sess.run([opt, Loss], feed_dict={x: mini_batch_x, y: mini_batch_y})
-                #Update with mini-batch
-                #epoch_loss += c
-                #Loss = tf.losses.mean_squared_error(labels=mini_batch_y,predictions=yhat,weights=W, loss_collection=tf.GraphKeys.LOSSES, reduction=Reduction.SUM_BY_NONZERO_WEIGHTS)
-    return trainingLoss, valdiationLoss, testLoss, trainingAccuracy, validationAccuracy, testAccuracy
+                mini_batch_x = shuffled_x[j*batchSize : (j+1)*batchSize :,]
+                mini_batch_y = shuffled_y[j*batchSize : (j+1)*batchSize :,]
+                sess.run([opt, Loss], {x: mini_batch_x, y: mini_batch_y})
+                L = MSE(W.eval(), b.eval(), trainingData, trainingTarget, regularization)
+                trainingLoss.append(L)
+ #               validationLoss.append(sess.run(Loss, feed_dict={validData, validTarget}))
+ #               testLoss.append(sess.run(Loss, feed_dict={testData, testTarget}))
+              
+                
+    return iterations, trainingLoss, valdiationLoss, testLoss, trainingAccuracy, validationAccuracy, testAccuracy
 
   
 #loading data
 trainData, validData, testData, trainTarget, validTarget, testTarget = loadData();
 
-#initializing parameters
-W = np.zeros((784, 1))
-N = len(trainData)
-b = 0
-epochs = 5000
-error = 0.0000001
-LR = 0.005
-reg = 0.1
-batchSize = 500
-#reshaping data
-trainData = np.reshape(trainData, (len(trainData), np.shape(trainData)[1]*np.shape(trainData)[2]))
-testData = np.reshape(testData, (len(testData), np.shape(testData)[1]*np.shape(testData)[2]))
-validData = np.reshape(validData, (len(validData), np.shape(validData)[1]*np.shape(validData)[2]))
-x = trainData
-y = trainTarget
 
-tLoss, vLoss, teLoss, tAccuracy, vAccuracy, teAccuracy = SGD(W, b, x, y, LR, epochs, reg, error, batchSize, validData, validTarget, testData, testTarget, lossType="MSE")
-    
 
 
 
