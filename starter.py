@@ -78,28 +78,10 @@ def normal(x, y):
     result = np.matmul(c, y)
     return result
 
-def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS, validData, validTarget, testData, testTarget, lossType="None"):
+def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS, lossType="None"):
     x = trainingData
     y = trainingLabels
-    print(lossType)
-    #all the loses of linear gradient descent
-    MSEs = np.zeros((iterations, 1))
-    MSEvalid = np.zeros((iterations, 1))
-    MSEtest = np.zeros((iterations, 1))
-    CEs = np.zeros((iterations, 1))
-    CEvalid = np.zeros((iterations, 1))
-    CEtest = np.zeros((iterations, 1))
-    #array of iterations
-    iterationNum = np.zeros((iterations, 1))
-    #accuracy classifications
-    accuracies = np.zeros((iterations, 1))
-    #initial accuracies
-    accuracyInitial = accuracy(W, b, trainingData, trainingLabels, lossType)
-    accuracyInitialV = accuracy(W, b, validData, validTarget, lossType)
-    accuracyInitialT = accuracy(W, b, testData, testTarget, lossType)
-    print(accuracyInitial)
     for i in range(iterations):
-        print(i)
         #calculating the gradient and updating the weights
         if (lossType == 'MSE'):
             gradW, gradB = gradMSE(W, b, x, y, reg)
@@ -107,101 +89,58 @@ def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS
             gradW, gradB = gradCE(W, b, x, y, reg)
         W = W - alpha*gradW
         b = b - alpha*gradB
-        
-        #Losses and accuracies stored for each iteration
-        #comment out what is not needed for graph
-        iterationNum[i] = i
-        MSEs[i] = MSE(W, b, trainingData, trainingLabels, reg)
-        MSEvalid[i] = MSE(W, b, validData, validTarget, reg)
-        MSEtest[i] = MSE(W, b, testData, testTarget, reg)
-        CEs[i] = crossEntropyLoss(W, b, trainingData, trainingLabels, reg)
-        CEvalid[i] = crossEntropyLoss(W, b, validData, validTarget, reg)
-        CEtest[i] = crossEntropyLoss(W, b, testData, testTarget, reg)
-        accuracies[i] = accuracy(W, b, x, y, lossType)
         #exit condition if difference is less than provided error
         if (np.all(abs(gradW)) < EPS):
             return W, b
+    return W, b
 
-    #final accuracies
-    accuracyFinal = accuracy(W, b, trainingData, trainingLabels, lossType)
-    accuracyFinalV = accuracy(W, b, validData, validTarget, lossType)
-    accuracyFinalT = accuracy(W, b, testData, testTarget, lossType)
-    print(accuracies[0])
-    print(accuracies[1])
-    print(accuracyFinal)
-    #printing out initial and final accuracies for all data sets
-    #after running descent on training data
-    print("Training accuracy Test 0.1 Reg")
-    print(accuracyInitial)
-    print(accuracyFinal)
-    print("Valid")
-    print(accuracyInitial)
-    print(accuracyFinal)
-    print("Test")
-    print(accuracyInitial)
-    print(accuracyFinal)
+#def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rate=None):
+#    #Initialize tensors
+#    W = tf.truncated_normal(shape=[784], stddev=0.5, dtype=tf.float32) #weights
+#    b = tf.Variable(1) #bias
+#    x = tf.placeholder(tf.float32, shape=(3500,784)) #data
+#    yhat = tf.placeholder(tf.float32, shape=(3500, 1)) #predicted labels
+#    y = tf.placeholder(tf.float32, shape=(3500, 1)) #real labels
+#    reg = tf.placeholder(tf.float32, shape=(1)) #regularization param
+#    
+#    tf.set_random_seed(421)
+#
+#    if loss == "MSE":
+#        L = MSE(W, b, x, y, reg)
+#    elif loss == "CE":
+#        L = crossEntropyLoss(W, b, x, y, reg)
+#
+#    opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(L)
+#
+#    #Initialize variables? I think
+#    sess.run(tf.global_variables_initializer())
+#    #Be sure to run opt_op.run() in training
+#    return W, b, yhat, y, L, opt, reg
 
-    #plotting accuracies
-    plt.xlabel('Iterations')
-    plt.ylabel('Accuracy')
-    plt.title('0.005 LR 0.1 Reg Training Accuracy')
-    plt.plot(iterationNum, accuracies, 'r')
-    plt.show()
-    
-    return W, b, CEs, CEvalid, CEtest, iterationNum
-
-def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rate=None):
-    #Initialize tensors
-    W = tf.truncated_normal(shape=[784], stddev=0.5, dtype=tf.float32) #weights
-    b = tf.Variable(1) #bias
-    x = tf.placeholder(tf.float32, shape=(3500,784)) #data
-    yhat = tf.placeholder(tf.float32, shape=(3500, 1)) #predicted labels
-    y = tf.placeholder(tf.float32, shape=(3500, 1)) #real labels
-    reg = tf.placeholder(tf.float32, shape=(1)) #regularization param
-    
-    tf.set_random_seed(421)
-
-    if loss == "MSE":
-        L = MSE(W, b, x, y, reg)
-    elif loss == "CE":
-        L = crossEntropyLoss(W, b, x, y, reg)
-
-    opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(L)
-
-    #Initialize variables? I think
-    sess.run(tf.global_variables_initializer())
-    #Be sure to run opt_op.run() in training
-    return W, b, yhat, y, L, opt, reg
-
-def SGD(W, b, x, yhat, y, L, opt, reg, batchSize, epoch):
-    #Initialize graph
-    w, bias, _y, y, loss, optimizer, regExp = buildGraph(beta1=None, beta2=None, epsilon=None, lossType="MSE", learning_rate=0.001)
-    #Calculate number of batches in training set
-    N = len(x)
-    num_mini_batches = math.floor(N/batchSize)
-    _permutation = np.random.permutation(N)
-    for i in range(epochs)
-        #Shuffle dataset each epoch
-        shuffled_x = x[:,_permutation]
-        shuffled_y = y[:,_permutation]
-        epoch_loss = 0
-
-        
-        for j in range(num_mini_batches):
-            #get mini-batches
-            mini_batch_x = shuffled_x[:,j*batchSize : (j+1)*batchSize]
-            mini_batch_y = shuffled_y[:,j*batchSize : (j+1)*batchSize]
-            #Calcuate step
-            c = sess.run([optimizer, loss], feed_dict={x: mini_batch_x, y: mini_batch_y})
-            #Update with mini-batch
-            epoch_loss += c
-            #Loss = tf.losses.mean_squared_error(labels=mini_batch_y,predictions=yhat,weights=W, loss_collection=tf.GraphKeys.LOSSES, reduction=Reduction.SUM_BY_NONZERO_WEIGHTS)
-return
-
-
-
-
-
+#def SGD(W, b, x, yhat, y, L, opt, reg, batchSize, epoch):
+#    #Initialize graph
+#    w, bias, _y, y, loss, optimizer, regExp = buildGraph(beta1=None, beta2=None, epsilon=None, lossType="MSE", learning_rate=0.001)
+#    #Calculate number of batches in training set
+#    N = len(x)
+#    num_mini_batches = math.floor(N/batchSize)
+#    _permutation = np.random.permutation(N)
+#    for i in range(epochs)
+#        #Shuffle dataset each epoch
+#        shuffled_x = x[:,_permutation]
+#        shuffled_y = y[:,_permutation]
+#        epoch_loss = 0
+#
+#        
+#        for j in range(num_mini_batches):
+#            #get mini-batches
+#            mini_batch_x = shuffled_x[:,j*batchSize : (j+1)*batchSize]
+#            mini_batch_y = shuffled_y[:,j*batchSize : (j+1)*batchSize]
+#            #Calcuate step
+#            c = sess.run([optimizer, loss], feed_dict={x: mini_batch_x, y: mini_batch_y})
+#            #Update with mini-batch
+#            epoch_loss += c
+#            #Loss = tf.losses.mean_squared_error(labels=mini_batch_y,predictions=yhat,weights=W, loss_collection=tf.GraphKeys.LOSSES, reduction=Reduction.SUM_BY_NONZERO_WEIGHTS)
+#return
 
         #Store the training, validation and test losses and accuracies
 
@@ -216,7 +155,8 @@ N = len(x)
 b = 0
 epochs = 5000
 error = 0.0000001
-
+LR = 0.005
+reg = 0.1
 
 #reshaping data
 x = np.reshape(x, (N, np.shape(x)[1]*np.shape(x)[2]))
@@ -225,57 +165,6 @@ validData = np.reshape(validData, (len(validData), np.shape(validData)[1]*np.sha
 
 y = trainTarget
 
-#more parameter initializiation
-LR = 0.005
-reg = 0.1
-
-####normal function (part 1.5)###
-n = normal(x, y)
-initialMSE = MSE(W, b, x, y, reg)
-finalMSE = MSE(n, b, x, y, reg)
-print("Training MSE")
-print(initialMSE)
-print(finalMSE)
-accuracyinitial = accuracy(W, b, x, y)
-accuracyfinal = accuracy(n, b, x, y)
-print("Training Accuracy")
-print(accuracyinitial)
-print(accuracyfinal)
-#################################
-
-###running gradient descent and plotting results#####
-initial = crossEntropyLoss(W, b, x, y, reg)
-W, b, Loss, LossValid, LossTest, iterations = grad_descent(W, b, x, y, LR, epochs, reg, error, validData, validTarget, testData, testTarget, lossType="CE")
-print('initial loss')
-print(initial)
-print("Training")
-print(Loss[0])
-print(Loss[4999])
-print("Valid")
-print(LossValid[0])
-print(LossValid[4999])
-print("Test")
-print(LossTest[0])
-print(LossTest[4999])
-
-plt.xlabel('Iterations')
-plt.ylabel('Loss')
-plt.title('0.005 LR Zero-Weight Decay Training Loss')
-plt.plot(iterations, Loss, 'r')
-plt.show()
-
-plt.xlabel('Iterations')
-plt.ylabel('Loss')
-plt.title('0.005 LR 0.1 Reg Valid Loss')
-plt.plot(iterations, LossValid, 'r')
-plt.show()
-
-plt.xlabel('Iterations')
-plt.ylabel('Loss')
-plt.title('0.005 LR 0.1 Reg Test Loss')
-plt.plot(iterations, LossTest, 'r')
-plt.show()
-##############################################
 
 
 
