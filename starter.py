@@ -65,6 +65,7 @@ def gradCE(W, b, x, y, reg):
 
     return gradW, gradB
 
+#finding the accuracy of weights and biases #ofcorrectclassifications/#ofimages
 def accuracy(weights, b, data, label):
     trained = np.matmul(data, weights) + b
     correct = 0
@@ -72,7 +73,14 @@ def accuracy(weights, b, data, label):
         if (abs(label[i] - trained[i]) < 0.5):
             correct = correct + 1
     return correct/len(trained)
-    
+
+#"normal equation" of the least squares formula for part 1.5
+def normal(x, y):
+    a = np.matmul(x.T, x)
+    b = np.linalg.inv(a)
+    c = np.matmul(b, x.T)
+    result = np.matmul(c, y)
+    return result
 
 def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS, validData, validTarget, testData, testTarget):
     x = trainingData
@@ -88,37 +96,55 @@ def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS
 
     #accuracy classifications
     accuracies = np.zeros((iterations, 1))
-    print(np.shape(b))
-    accuracyInitial = accuracy(W, b, validData, validTarget)
 
-    print(np.shape(b))
+    #initial accuracies
+    accuracyInitial = accuracy(W, b, trainingData, trainingLabels)
+    accuracyInitialV = accuracy(W, b, validData, validTarget)
+    accuracyInitialT = accuracy(W, b, testData, testTarget)
+
     for i in range(iterations):
-        #print(i)
+        #calculating the gradient and updating the weights
         gradW, gradB = gradMSE(W, b, x, y, reg)
-        print(np.shape(gradB))
         W = W - alpha*gradW
         b = b - alpha*gradB
-    
-        
-        MSEs[i] = MSE(W, 0, trainingData, trainingLabels, 0)
-        MSEvalid[i] = MSE(W, 0, validData, validTarget, 0)
-        MSEtest[i] = MSE(W, 0, testData, testTarget, 0)     
-#        accuracies[i] = accuracy(W, b, x, y)
 
+        #Losses and accuracies stored for each iteration
+        #comment out what is not needed for graph
         iterationNum[i] = i
+        MSEs[i] = MSE(W, b, trainingData, trainingLabels, 0)
+        MSEvalid[i] = MSE(W, b, validData, validTarget, 0)
+        MSEtest[i] = MSE(W, b, testData, testTarget, 0)     
+        accuracies[i] = accuracy(W, b, x, y)
+
+        #exit condition if difference is less than provided error
         if (np.all(abs(gradW)) < EPS):
             return W, b
-    print(np.shape(b))
-    accuracyFinal = accuracy(W, 0, validData, validTarget)
+
+    #final accuracies
+    accuracyFinal = accuracy(W, b, trainingData, trainingLabels)
+    accuracyFinalV = accuracy(W, b, validData, validTarget)
+    accuracyFinalT = accuracy(W, b, testData, testTarget)
+
+    #printing out initial and final accuracies for all data sets
+    #after running descent on training data
+    print("Training accuracy Test 0.5 Reg")
+    print(accuracyInitial)
+    print(accuracyFinal)
+    print("Valid")
+    print(accuracyInitial)
+    print(accuracyFinal)
+    print("Test")
     print(accuracyInitial)
     print(accuracyFinal)
 
-#    plt.xlabel('Iterations')
-#    plt.ylabel('Loss')
-#    plt.title('0.5 Reg Training Loss')
-#    plt.plot(iterationNum, MSEs, 'r')
-#    plt.show()
-    return W, b
+    #plotting accuracies
+    plt.xlabel('Iterations')
+    plt.ylabel('Accuracy')
+    plt.title('0.5 Reg Training Accuracy')
+    plt.plot(iterationNum, accuracies, 'r')
+    plt.show()
+    
+    return W, b, MSEs, MSEvalid, MSEtest, iterationNum
 
 def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rate=None):
 
@@ -133,12 +159,11 @@ def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rat
     tf.set_random_seed(421)
 
     if loss == "MSE":
-    # Your implementation
         L = MSE(W, b, x, y, reg)
     elif loss == "CE":
         L = crossEntropyLoss(W, b, x, y, reg)
 
-    opt = tf.train.AdamOptimizer(learning_rate=0.001,beta1, beta2, epsilon)
+    opt = tf.train.AdamOptimizer(learning_rate=0.001, beta1, beta2, epsilon)
     opt_op = opt.minimize(L)
 
     #Initialize variables? I think
@@ -157,8 +182,9 @@ def SGD(W, b, x, yhat, y, L, opt, reg, batchSize, epoch)
         #Shuffle dataset each epoch
         shuffled_x = x[:,_permutation]
         shuffled_y = y[:,_permutation]
+
         
-        for j in range(num_mini_batches)
+        for j in range(num_mini_batches):
             #get mini-batches
             mini_batch_x = shuffled_x[:,j*batchSize : (j+1)*batchSize]
             mini_batch_y = shuffled_y[:,j*batchSize : (j+1)*batchSize]
@@ -177,22 +203,73 @@ def SGD(W, b, x, yhat, y, L, opt, reg, batchSize, epoch)
         #Store the training, validation and test losses and accuracies
 
 
-
+#loading data
 trainData, validData, testData, trainTarget, validTarget, testTarget = loadData();
+
+#initializing parameters
 W = np.zeros((784, 1))
 x = trainData
 N = len(x)
 b = 0
+epochs = 5000
+error = 0.0000001
 
+
+#reshaping data
 x = np.reshape(x, (N, np.shape(x)[1]*np.shape(x)[2]))
 testData = np.reshape(testData, (len(testData), np.shape(testData)[1]*np.shape(testData)[2]))
 validData = np.reshape(validData, (len(validData), np.shape(validData)[1]*np.shape(validData)[2]))
 
 y = trainTarget
 
-W, b = grad_descent(W, 0, x, y, 0.005, 5000, 0.001, 0.0000001, validData, validTarget, testData, testTarget)
+#more parameter initializiation
+LR = 0.005
+reg = 0
 
+####normal function (part 1.5)###
+n = normal(x, y)
+initialMSE = MSE(W, b, x, y, reg)
+finalMSE = MSE(n, b, x, y, reg)
+print("Training MSE")
+print(initialMSE)
+print(finalMSE)
+accuracyinitial = accuracy(W, b, x, y)
+accuracyfinal = accuracy(n, b, x, y)
+print("Training Accuracy")
+print(accuracyinitial)
+print(accuracyfinal)
+#################################
 
+###running gradient descent and plotting results#####
+W, b, Loss, LossValid, LossTest, iterations = grad_descent(W, b, x, y, LR, epochs, reg, error, validData, validTarget, testData, testTarget)
+print("Training")
+print(Loss[0])
+print(Loss[4999])
+print("Valid")
+print(LossValid[0])
+print(LossValid[4999])
+print("Test")
+print(LossTest[0])
+print(LossTest[4999])
+
+plt.xlabel('Iterations')
+plt.ylabel('Loss')
+plt.title('0.5 Reg Training Loss')
+plt.plot(iterations, Loss, 'r')
+plt.show()
+
+plt.xlabel('Iterations')
+plt.ylabel('Loss')
+plt.title('0.5 Reg Valid Loss')
+plt.plot(iterations, LossValid, 'r')
+plt.show()
+
+plt.xlabel('Iterations')
+plt.ylabel('Loss')
+plt.title('0.5 Reg Test Loss')
+plt.plot(iterations, LossTest, 'r')
+plt.show()
+###############################################
 
 
 
