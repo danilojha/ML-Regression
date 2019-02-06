@@ -163,17 +163,16 @@ def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rat
     elif loss == "CE":
         L = crossEntropyLoss(W, b, x, y, reg)
 
-    opt = tf.train.AdamOptimizer(learning_rate=0.001, beta1, beta2, epsilon)
-    opt_op = opt.minimize(L)
+    opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(L)
 
     #Initialize variables? I think
     sess.run(tf.global_variables_initializer())
     #Be sure to run opt_op.run() in training
     return W, b, yhat, y, L, opt, reg
 
-def SGD(W, b, x, yhat, y, L, opt, reg, batchSize, epoch)
+def SGD(W, b, x, yhat, y, L, opt, reg, batchSize, epoch):
     #Initialize graph
-    buildGraph(beta1=None, beta2=None, epsilon=None, lossType="MSE", learning_rate=0.001)
+    w, bias, _y, y, loss, optimizer, regExp = buildGraph(beta1=None, beta2=None, epsilon=None, lossType="MSE", learning_rate=0.001)
     #Calculate number of batches in training set
     N = len(x)
     num_mini_batches = math.floor(N/batchSize)
@@ -182,6 +181,7 @@ def SGD(W, b, x, yhat, y, L, opt, reg, batchSize, epoch)
         #Shuffle dataset each epoch
         shuffled_x = x[:,_permutation]
         shuffled_y = y[:,_permutation]
+        epoch_loss = 0
 
         
         for j in range(num_mini_batches):
@@ -189,11 +189,11 @@ def SGD(W, b, x, yhat, y, L, opt, reg, batchSize, epoch)
             mini_batch_x = shuffled_x[:,j*batchSize : (j+1)*batchSize]
             mini_batch_y = shuffled_y[:,j*batchSize : (j+1)*batchSize]
             #Calcuate step
-            sess.run([optimizer, cost], feed_dict={x: epoch_x, y: epoch_y})
+            c = sess.run([optimizer, loss], feed_dict={x: mini_batch_x, y: mini_batch_y})
             #Update with mini-batch
-            
+            epoch_loss += c
             #Loss = tf.losses.mean_squared_error(labels=mini_batch_y,predictions=yhat,weights=W, loss_collection=tf.GraphKeys.LOSSES, reduction=Reduction.SUM_BY_NONZERO_WEIGHTS)
-            sess.run()
+return
 
 
 
