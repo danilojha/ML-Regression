@@ -153,7 +153,7 @@ def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS
 def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rate=None):
     #Initialize tensors
     W = tf.truncated_normal(shape=[784], stddev=0.5, dtype=tf.float32) #weights
-    b = tf.Variable() #bias
+    b = tf.Variable(1) #bias
     x = tf.placeholder(tf.float32, shape=(3500,784)) #data
     yhat = tf.placeholder(tf.float32, shape=(3500, 1)) #predicted labels
     y = tf.placeholder(tf.float32, shape=(3500, 1)) #real labels
@@ -166,24 +166,38 @@ def buildGraph(beta1=None, beta2=None, epsilon=None, lossType=None, learning_rat
     elif loss == "CE":
         L = crossEntropyLoss(W, b, x, y, reg)
 
-    opt = tf.train.AdamOptimizer(learning_rate=0.001, beta1, beta2, epsilon)
-    opt_op = opt.minimize(L)
+    opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(L)
+
+    #Initialize variables? I think
+    sess.run(tf.global_variables_initializer())
     #Be sure to run opt_op.run() in training
     return W, b, yhat, y, L, opt, reg
 
-def SDG(W, b, x, yhat, y, L, opt, reg, batchSize, epoch):
+def SGD(W, b, x, yhat, y, L, opt, reg, batchSize, epoch):
+    #Initialize graph
+    w, bias, _y, y, loss, optimizer, regExp = buildGraph(beta1=None, beta2=None, epsilon=None, lossType="MSE", learning_rate=0.001)
+    #Calculate number of batches in training set
     N = len(x)
     num_mini_batches = math.floor(N/batchSize)
     _permutation = np.random.permutation(N)
-    for i in range(epochs):
+    for i in range(epochs)
+        #Shuffle dataset each epoch
         shuffled_x = x[:,_permutation]
+        shuffled_y = y[:,_permutation]
+        epoch_loss = 0
+
         
         for j in range(num_mini_batches):
             #get mini-batches
             mini_batch_x = shuffled_x[:,j*batchSize : (j+1)*batchSize]
             mini_batch_y = shuffled_y[:,j*batchSize : (j+1)*batchSize]
-            #Calculate with update with mini-batch
-            Loss = 
+            #Calcuate step
+            c = sess.run([optimizer, loss], feed_dict={x: mini_batch_x, y: mini_batch_y})
+            #Update with mini-batch
+            epoch_loss += c
+            #Loss = tf.losses.mean_squared_error(labels=mini_batch_y,predictions=yhat,weights=W, loss_collection=tf.GraphKeys.LOSSES, reduction=Reduction.SUM_BY_NONZERO_WEIGHTS)
+return
+
 
 
 
@@ -199,9 +213,10 @@ trainData, validData, testData, trainTarget, validTarget, testTarget = loadData(
 W = np.zeros((784, 1))
 x = trainData
 N = len(x)
-b=0
+b = 0
 epochs = 5000
 error = 0.0000001
+
 
 #reshaping data
 x = np.reshape(x, (N, np.shape(x)[1]*np.shape(x)[2]))
