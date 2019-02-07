@@ -147,7 +147,7 @@ def SGD(Weight, bias, trainingData, trainingTarget, alpha, epochs, regularizatio
                 mini_batch_y = shuffled_y[j*batchSize : (j+1)*batchSize :,]
                 #running optimization with loss minimization
                 sess.run([opt, Loss], {x: mini_batch_x, y: mini_batch_y, reg: regularization})
-                #saving values for plotting
+            #saving values for plotting
             iterations.append(i)
             trainingLoss.append(crossEntropyLoss(W.eval(), b.eval(), trainingData, trainingTarget, regularization))
             validationLoss.append(crossEntropyLoss(W.eval(), b.eval(), validData, validTarget, regularization))
