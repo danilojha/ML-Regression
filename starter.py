@@ -86,6 +86,7 @@ def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS
     y = trainingLabels
     for i in range(iterations):
         #calculating the gradient and updating the weights
+        print(i)
         if (lossType == 'MSE'):
             gradW, gradB = gradMSE(W, b, x, y, reg)
         else:
@@ -147,10 +148,10 @@ trainData, validData, testData, trainTarget, validTarget, testTarget = loadData(
 W = np.zeros((784, 1))
 N = len(trainData)
 b = 0
-epochs = 700
+epochs = 5000
 error = 0.0000001
-LR = 0.001
-reg = 0
+LR = 0.005
+reg = 0.1
 batchSize = 500
 
 #reshaping data
@@ -159,8 +160,3 @@ testData = np.reshape(testData, (len(testData), np.shape(testData)[1]*np.shape(t
 validData = np.reshape(validData, (len(validData), np.shape(validData)[1]*np.shape(validData)[2]))
 x = trainData
 y = trainTarget
-
-
-
-
-
