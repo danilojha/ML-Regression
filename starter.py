@@ -104,28 +104,26 @@ def buildGraph(beta1=None, beta2=None, epsilon=None, lossType="None", learning_r
     b = tf.Variable(0, name = 'bias') #bias
     x = tf.placeholder(tf.float32, shape=(None,784), name='x') #data
     y = tf.placeholder(tf.float32, shape=(None, 1), name='y') #real labels 
-    reg = tf.placeholder(tf.float32, shape=(1), name ='reg') #regularization
+    reg = tf.placeholder(tf.float32, shape=(None), name ='reg') #regularization
     
     yhat = tf.placeholder(tf.float32, shape=(3500, 1), name = 'yhat') #predicted labels
     yhat = tf.add(tf.cast(tf.matmul(x, W), tf.float32), tf.cast(b, tf.float32))
     
     if lossType == "MSE":
-        Loss = tf.losses.mean_squared_error(y,yhat)
+        Loss = (1/2)*tf.losses.mean_squared_error(y, yhat) + (1/2)*tf.multiply(reg, tf.square(W))
     elif lossType == "CE":
-        Loss = tf.losses.sigmoid_cross_entropy(y, yhat)
-
-    opt = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(Loss)
-    #Be sure to run opt_op.run() in training
+        Loss = tf.losses.sigmoid_cross_entropy(y, yhat) + (1/2)*tf.multiply(reg, tf.square(W))
+        
+    opt = tf.train.AdamOptimizer(learning_rate = learning_rate, epsilon = epsilon).minimize(Loss)
     return W, b, x, yhat, y, Loss, opt, reg
 
 def SGD(Weight, bias, trainingData, trainingTarget, alpha, epochs, regularization, EPS, batchSize, validData, validTarget, testData, testTarget, lossType="None"):
     #Initialize graph
-    W, b, x, yhat, y, Loss, opt, reg = buildGraph(beta1=None, beta2=None, epsilon=None, lossType="MSE", learning_rate=0.001)
-    init = tf.global_variables_initializer()
+    W, b, x, yhat, y, Loss, opt, reg = buildGraph(beta1=None, beta2=None, epsilon=1e-4, lossType=lossType, learning_rate=0.001)
     #Calculate number of batches in training set
     N = len(trainingData)
     num_mini_batches = np.floor(N/batchSize)
-
+    #declare needed losses and accuracies for plotting
     trainingLoss = []
     validationLoss = []
     testLoss = []
@@ -133,37 +131,52 @@ def SGD(Weight, bias, trainingData, trainingTarget, alpha, epochs, regularizatio
     validationAccuracy = []
     testAccuracy = []
     iterations =[]
-    
-    
+    #mini-batch SGD 
     with tf.Session() as sess:
-        sess.run(init)
+        sess.run(tf.global_variables_initializer())
         for i in range(epochs):
             #Shuffle dataset each epoch
             permutation = np.random.permutation(N)
             shuffled_x = trainingData[permutation,:]
             shuffled_y = trainingTarget[permutation,:]
             epoch_loss = 0
-            print(i)
-            iterations.append(i)
-            
+            print(round(i/epochs, 2))
             for j in range(int(num_mini_batches)):
                 #get mini-batches
                 mini_batch_x = shuffled_x[j*batchSize : (j+1)*batchSize :,]
                 mini_batch_y = shuffled_y[j*batchSize : (j+1)*batchSize :,]
-                sess.run([opt, Loss], {x: mini_batch_x, y: mini_batch_y})
-                L = MSE(W.eval(), b.eval(), trainingData, trainingTarget, regularization)
-                trainingLoss.append(L)
- #               validationLoss.append(sess.run(Loss, feed_dict={validData, validTarget}))
- #               testLoss.append(sess.run(Loss, feed_dict={testData, testTarget}))
-              
-                
-    return iterations, trainingLoss, valdiationLoss, testLoss, trainingAccuracy, validationAccuracy, testAccuracy
+                #running optimization with loss minimization
+                sess.run([opt, Loss], {x: mini_batch_x, y: mini_batch_y, reg: regularization})
+                #saving values for plotting
+            iterations.append(i)
+            trainingLoss.append(crossEntropyLoss(W.eval(), b.eval(), trainingData, trainingTarget, regularization))
+            validationLoss.append(crossEntropyLoss(W.eval(), b.eval(), validData, validTarget, regularization))
+            testLoss.append(crossEntropyLoss(W.eval(), b.eval(), testData, testTarget, regularization))
+            trainingAccuracy.append(accuracy(W.eval(), b.eval(), trainingData, trainingTarget, lossType="CE"))       
+            validationAccuracy.append(accuracy(W.eval(), b.eval(), validData, validTarget, lossType="CE"))       
+            testAccuracy.append(accuracy(W.eval(), b.eval(), testData, testTarget, lossType="CE"))       
+    return iterations, trainingLoss, validationLoss, testLoss, trainingAccuracy, validationAccuracy, testAccuracy
 
-  
+#############   INITIALIZING FOR A WORKING SCRIPT   ############### 
 #loading data
 trainData, validData, testData, trainTarget, validTarget, testTarget = loadData();
 
+#initializing parameters
+W = np.zeros((784, 1))
+N = len(trainData)
+b = 0
+epochs = 700
+error = 0.0000001
+LR = 0.001
+reg = 0
+batchSize = 500
 
+#reshaping data
+trainData = np.reshape(trainData, (len(trainData), np.shape(trainData)[1]*np.shape(trainData)[2]))
+testData = np.reshape(testData, (len(testData), np.shape(testData)[1]*np.shape(testData)[2]))
+validData = np.reshape(validData, (len(validData), np.shape(validData)[1]*np.shape(validData)[2]))
+x = trainData
+y = trainTarget
 
 
 
