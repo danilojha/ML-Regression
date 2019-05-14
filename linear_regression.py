@@ -1,10 +1,8 @@
-#ECE421 Assignment 1
-#Danil Ojha & Elizabeth Bertozzi
-
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
+#loading data
 def loadData():
     with np.load('notMNIST.npz') as data :
         Data, Target = data ['images'], data['labels']
@@ -24,6 +22,7 @@ def loadData():
         testData, testTarget = Data[3600:], Target[3600:]
     return trainData, validData, testData, trainTarget, validTarget, testTarget
 
+#Mean Squared Error Loss
 def MSE(W, b, x, y, reg):   
     N = len(x)  
     #MSE loss function
@@ -34,6 +33,7 @@ def MSE(W, b, x, y, reg):
     Loss = Lw + Ld
     return Loss
 
+#gradient of MSE
 def gradMSE(W, b, x, y, reg):
     N = len(x)
     Wx = np.matmul(x, W)
@@ -44,6 +44,7 @@ def gradMSE(W, b, x, y, reg):
     gradB = np.dot(np.ones((1, x.shape[0])), Wx + b - y)*(1/N)
     return gradW, gradB
 
+#Log loss
 def crossEntropyLoss(W, b, x, y, reg):
     #Binary cross entropy loss
     N = len(x)
@@ -54,6 +55,7 @@ def crossEntropyLoss(W, b, x, y, reg):
     Loss = Lw + Ld
     return Loss
 
+#gradient of log loss
 def gradCE(W, b, x, y, reg):
     N = len(x)
     yhat = 1/(1 + np.exp(-1*np.matmul(x, W) + b))
@@ -81,6 +83,7 @@ def normal(x, y):
     result = np.matmul(c, y)
     return result
 
+#algorithm for gud learning
 def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS, lossType="None"):
     x = trainingData
     y = trainingLabels
@@ -98,6 +101,7 @@ def grad_descent(W, b, trainingData, trainingLabels, alpha, iterations, reg, EPS
             return W, b
     return W, b
 
+#building graph
 def buildGraph(beta1=None, beta2=None, epsilon=None, lossType="None", learning_rate=None):
     tf.set_random_seed(421)
     #Initialize tensors
@@ -120,14 +124,24 @@ def buildGraph(beta1=None, beta2=None, epsilon=None, lossType="None", learning_r
 
 def SGD(Weight, bias, trainingData, trainingTarget, alpha, epochs, regularization, EPS, batchSize, validData, validTarget, testData, testTarget, lossType="None"):
     #Initialize graph
-    W, b, x, yhat, y, Loss, opt, reg = buildGraph(beta1=None, beta2=None, epsilon=1e-4, lossType=lossType, learning_rate=0.001)
+    W, b, x, yhat, y, Loss, opt, reg = buildGraph(beta1=None, beta2=None, epsilon=None, lossType=lossType, learning_rate=0.001)
     #Calculate number of batches in training set
     N = len(trainingData)
     num_mini_batches = np.floor(N/batchSize)
+
+    iterations = []
+    trainingLoss = []
+    validLoss = []
+    testLoss = []
+    trainingAccuracy = []
+    validAccuracy = []
+    testAccuracy = []
+    
     #mini-batch SGD 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         for i in range(epochs):
+            print(i)
             #Shuffle dataset each epoch
             permutation = np.random.permutation(N)
             shuffled_x = trainingData[permutation,:]
@@ -138,7 +152,16 @@ def SGD(Weight, bias, trainingData, trainingTarget, alpha, epochs, regularizatio
                 mini_batch_y = shuffled_y[j*batchSize : (j+1)*batchSize :,]
                 #running optimization with loss minimization
                 sess.run([opt, Loss], {x: mini_batch_x, y: mini_batch_y, reg: regularization})
-    return W.eval(), b.eval()
+            iterations.append(i)
+            trainingLoss.append(MSE(W.eval(), b.eval(), trainingData, trainingTarget, regularization))
+            validLoss.append(MSE(W.eval(), b.eval(), validData, validTarget, regularization))
+            testLoss.append(MSE(W.eval(), b.eval(), testData, testTarget, regularization))
+            print(testLoss[i])
+            trainingAccuracy.append(accuracy(W.eval(), b.eval(), trainingData, trainingTarget, lossType='MSE'))
+            validAccuracy.append(accuracy(W.eval(), b.eval(), validData, validTarget, lossType='MSE'))
+            testAccuracy.append(accuracy(W.eval(), b.eval(), testData, testTarget, lossType='MSE'))
+            print(testAccuracy[i])
+    return iterations, testLoss, testAccuracy, trainingLoss, validLoss, testLoss, trainingAccuracy, validAccuracy, testAccuracy
 
 #############   INITIALIZING FOR A WORKING SCRIPT   ############### 
 #loading data
@@ -148,7 +171,7 @@ trainData, validData, testData, trainTarget, validTarget, testTarget = loadData(
 W = np.zeros((784, 1))
 N = len(trainData)
 b = 0
-epochs = 5000
+epochs = 700
 error = 0.0000001
 LR = 0.005
 reg = 0.1
@@ -160,3 +183,7 @@ testData = np.reshape(testData, (len(testData), np.shape(testData)[1]*np.shape(t
 validData = np.reshape(validData, (len(validData), np.shape(validData)[1]*np.shape(validData)[2]))
 x = trainData
 y = trainTarget
+
+#call required methods as necessary below, e.g.
+#i, tl, ta = SGD(W, b, trainData, trainTarget, LR, epochs, reg, error, batchSize, validData, validTarget, testData, testTarget, lossType="MSE")
+
